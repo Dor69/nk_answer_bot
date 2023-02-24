@@ -12,12 +12,12 @@ state = None
 
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
-    await message.reply("Здравствуйте! Вы можете задать интересующие вопросы, прислать новость, фото и видео. На связи с вами редактор интернет-сайта <<Наш край>>")
+    await message.reply("Здравствуйте! Вы можете задать интересующие вопросы, прислать новость, фото и видео. На связи с вами редактор интернет-сайта Наш край")
 
 #Method send message to Admin
 
-@dp.message_handler(content_types=["text"])   
-async def message_handler1(message: types.Any):
+@dp.message_handler(content_types=types.ContentTypes.ANY)   
+async def message_handler1(message):
     await bot.forward_message(admin_id, message_id = message.message_id, from_chat_id= message.chat.id )
     await bot.send_message(text="Вопрос от @{}".format(message.from_user["username"]), chat_id=admin_id)
     await message.reply("Ваше сообщение было отправлено")
