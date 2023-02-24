@@ -17,16 +17,16 @@ async def start_command(message: types.Message):
 #Method send message to Admin
 
 @dp.message_handler(content_types=["text"])   
-async def message_handler1(message):
+async def message_handler1(message: types.Any):
     await bot.forward_message(admin_id, message_id = message.message_id, from_chat_id= message.chat.id )
     await bot.send_message(text="Вопрос от @{}".format(message.from_user["username"]), chat_id=admin_id)
     await message.reply("Ваше сообщение было отправлено")
 
- #Method send photo to admin
-@dp.message_handler(content_types=["photo"])
-async def replying(pic):
-    await bot.send_message(text="Картинка от @{} подпись = {} ".format(pic.from_user["username"], pic.caption), chat_id = admin_id)
-    await bot.send_photo(admin_id, pic.photo[-1].file_id)
+#  #Method send photo to admin
+# @dp.message_handler(content_types=["photo"])
+# async def replying(pic):
+#     await bot.send_message(text="Картинка от @{} подпись = {} ".format(pic.from_user["username"], pic.caption), chat_id = admin_id)
+#     await bot.send_photo(admin_id, pic.photo[-1].file_id)
     
 
 if __name__ == '__main__':
