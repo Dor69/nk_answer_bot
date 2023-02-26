@@ -3,4 +3,4 @@ RUN mkdir /app
 ADD . /app
 WORKDIR /app
 RUN pip install -r requirements.txt
-RUN python bot.py
+RUN python main.py
