@@ -1,33 +1,46 @@
-from aiogram.utils import executor
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.utils import executor
+
 from config import BOT_TOKEN, admin_id
 
-storage = MemoryStorage()
-bot = Bot(token= BOT_TOKEN, parse_mode=types.ParseMode.HTML)
-dp = Dispatcher(bot, storage=storage)
-state = None
-#Method /Start
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
+# Словарь для хранения выбора типа сообщения пользователем
+user_message_type = {}
+
+# Обработчик команды /start
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
-    await message.reply("Здравствуйте! Вы можете задать интересующие вопросы, прислать новость, фото и видео. На связи с вами редактор интернет-сайта Наш край")
+    markup = types.ReplyKeyboardRemove()
+    await message.reply("Привет! Опишите вашу проблему или предложение:", reply_markup=markup)
 
-#Method send message to Admin
-
-@dp.message_handler(content_types=types.ContentTypes.ANY)   
-async def message_handler1(message):
-    await bot.forward_message(admin_id, message_id = message.message_id, from_chat_id= message.chat.id )
-    await bot.send_message(text="Вопрос от @{}".format(message.from_user["username"]), chat_id=admin_id)
-    await message.reply("Ваше сообщение было отправлено")
-
-#  #Method send photo to admin
-# @dp.message_handler(content_types=["photo"])
-# async def replying(pic):
-#     await bot.send_message(text="Картинка от @{} подпись = {} ".format(pic.from_user["username"], pic.caption), chat_id = admin_id)
-#     await bot.send_photo(admin_id, pic.photo[-1].file_id)
-    
+# Обработчик для получения текстового сообщения от пользователя
+@dp.message_handler(lambda message: message.text)
+async def handle_text_message(message: types.Message):
+    # Проверяем, выбрал ли пользователь тип сообщения
+    if message.chat.id in user_message_type:
+        message_type = user_message_type[message.chat.id]
+        
+        # Отправляем сообщение администратору с указанием типа и текста сообщения
+        await bot.send_message(admin_id, f"Сообщение типа '{message_type}' от @{message.from_user.username}: {message.text}")
+        await message.reply(f"Ваше сообщение типа '{message_type}' отправлено администратору.")
+        # Удаляем выбор типа сообщения
+        del user_message_type[message.chat.id]
+        markup = types.ReplyKeyboardRemove()
+    else:
+        # Если пользователь еще не выбрал тип сообщения, предлагаем это сделать
+        markup = types.ReplyKeyboardMarkup(row_width=2)
+        item1 = types.KeyboardButton("Проблема")
+        item2 = types.KeyboardButton("Предложение")
+        markup.add(item1, item2)
+        await message.reply("Выберите тип вашего сообщения:", reply_markup=markup)
+        # Добавляем выбор типа сообщения в словарь
+        user_message_type[message.chat.id] = message.text
 
 if __name__ == '__main__':
-    executor.start_polling(dp)
+    from aiogram import executor
+    executor.start_polling(dp, skip_updates=True)
